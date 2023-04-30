@@ -1,4 +1,4 @@
-# Faster R-CNN for Correct Wheel Nut Installation Detection
+# Wheel Nut Detection with Artificial Intelligence - Pytorch Faster R-CNN
 
 ## Introduction
 This repository contains the code for a Faster R-CNN model that can be used to detect incorrect or missing wheel nut installation on vehicles. The model uses image processing and data augmentation techniques to train on a dataset of images containing both correctly and incorrectly installed nuts. The model also ensures the correct type of nut is installed, as there are 6 different types of nuts.
