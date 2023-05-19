@@ -1,23 +1,28 @@
 import torch
 import cv2
 import xml.etree.ElementTree as ET
-import torchvision.transforms as T
+import torchvision
 import numpy as np
+from PIL import Image
+
 class FastRCNN_Dataset(torch.utils.data.Dataset):
-    def __init__(self, df, classes, im_size=None, transforms=None):
+    def __init__(self, df, im_size=None, transforms=None):
         super().__init__()
         self.df = df
         self.transforms = transforms
         self.im_size = im_size
         # load all image files, sorting them to ensure that they are aligned
-        self.images = df["image_path"].tolist()
+        self.im_paths = df["image_path"].tolist()
         self.annot_paths = df["annot_path"].tolist()
         self.labels = df['class'].tolist()
-        self.classes = classes
-        self.labels_dict = {c: i+1 for i, c in enumerate(classes)}
+        self.classes = ['BG'] + sorted(list(set(value for sublist in df['label'] for value in sublist)))
+        self.labels_dict = {c: i+1 for i, c in enumerate(self.classes)}
 
     def extract_boxes_from_xml(self, filename):
-        tree = ET.parse(filename) # load and parse the file
+        try:
+            tree = ET.parse(filename) # load and parse the file
+        except:
+            return [],[0] # return emptry bbox and BG class if no xml exist
         root = tree.getroot() # get the root of the document
 
         # extract each bounding box
@@ -26,6 +31,7 @@ class FastRCNN_Dataset(torch.utils.data.Dataset):
             labels.append(0)
         else:
             for box in root.findall('object'):
+                if box.find('name').text == 'OK DS NUT': continue # Skip some class while loading
                 xmin = int(box.find('bndbox').find('xmin').text)
                 ymin = int(box.find('bndbox').find('ymin').text)
                 xmax = int(box.find('bndbox').find('xmax').text)
@@ -36,15 +42,12 @@ class FastRCNN_Dataset(torch.utils.data.Dataset):
         return boxes,labels
 
     def __getitem__(self, idx):
-        image_path = self.images[idx]
-
-        img = cv2.imread(self.images[idx])
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB).astype(np.float32)
-        img /= 255.0
-
-        org_h,org_w = img.shape[:2] # Original image height,width
-        if self.im_size: img = cv2.resize(img.copy(),self.im_size)
-        res_h,res_w = img.shape[:2] # Resized image height,width
+        img = Image.open(self.im_paths[idx]).convert("RGB")
+        org_w, org_h = img.size # Original image height,width
+        if self.im_size: img = img.resize(self.im_size)
+        res_w, res_h = img.size # Resized image height,width
+        img = np.array(img, dtype=np.float32) / 255.0
+        
         temp_boxes,labels = self.extract_boxes_from_xml(self.annot_paths[idx]) # get bboxes from xml
         boxes = []
 
@@ -85,7 +88,7 @@ class FastRCNN_Dataset(torch.utils.data.Dataset):
                       'area': (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0]), 
                       'iscrowd': torch.zeros((boxes.shape[0],), dtype=torch.int64)}
 
-        return T.Compose([T.ToTensor()])(img), target
+        return torchvision.transforms.ToTensor()(img), target
 
     def __len__(self):
-        return len(self.images)
+        return len(self.im_paths)
