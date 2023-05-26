@@ -15,7 +15,7 @@ Object detection model with Pytorch Faster R-CNN
 
 # Introduction
 This repository contains the code for a Faster R-CNN model that can be used to detect incorrect or missing wheel nut installation on vehicles. The model uses image processing and data augmentation techniques to train on a dataset of images containing both correctly and incorrectly installed nuts. The model also ensures the correct type of nut is installed, as there are 6 different types of nuts.
-NOT: Original dataset of the project is the property of Toyota I am not allowed to share dataset as it is the property of Toyota and sharing this confidential dataset is strictly prohibited. Therefore, you will get error after downloading this project & running it directly since dataset is missing. However, you may use this project as a reference for similar projects.
+NOT: Original dataset of the project is the property of Toyota and sharing this confidential dataset is strictly prohibited. Therefore, you will get error after downloading this project & running it directly since dataset is missing. However, you may use this project as a reference for similar projects.
 
 # Languages and Tools
 <p align="left">
